@@ -6,7 +6,7 @@ let Service, Characteristic;
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
-  homebridge.registerAccessory('homebridge-ledstrip-ble', 'LedStrip', LedStrip);
+  homebridge.registerAccessory('@gatoxmiau/homebridge-ledstrip-ble-rgbw, 'LedStrip', LedStrip);
 };
 
 function LedStrip(log, config, api) {
