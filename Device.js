@@ -65,8 +65,8 @@ module.exports = class Device {
     //console.log(this.connected);
     const { characteristics } =
       await this.peripheral.discoverSomeServicesAndCharacteristicsAsync(
-        ["fff0"],
-        ["fff3"]
+        ["ffe5"],
+        ["ffe9"]
       );
     console.log(characteristics);
     this.write = characteristics[0];
@@ -81,34 +81,14 @@ module.exports = class Device {
   }
 
   async set_power(status) {
-    if (!this.connected) await this.connectAndGetWriteCharacteristics();
-    if (this.write) {
-      const buffer = Buffer.from(
-        `7e0004${status ? "01" : "00"}00000000ef`,
-        "hex"
-      );
-      console.log("Write:", buffer);
-      this.write.write(buffer, true, err => {
-        if (err) console.log("Error:", err);
-        this.power = status;
-        this.disconnect();
-      });
-    }
+	console.log("set_power called, no action");
+	return;
   }
 
   async set_brightness(level) {
-    if (level > 100 || level < 0) return;
-    if (!this.connected) await this.connectAndGetWriteCharacteristics();
-    if (this.write) {
-      const level_hex = ("0" + level.toString(16)).slice(-2);
-      const buffer = Buffer.from(`7e0001${level_hex}00000000ef`, "hex");
-      console.log("Write:", buffer);
-      this.write.write(buffer, true, err => {
-        if (err) console.log("Error:", err);
-        this.brightness = level;
-        this.disconnect();
-      });
-    }
+	console.log("set_brightness called, no action");
+	this.brightness = level;
+	return;
   }
 
   async set_rgb(r, g, b) {
@@ -117,7 +97,7 @@ module.exports = class Device {
       const rhex = ("0" + r.toString(16)).slice(-2);
       const ghex = ("0" + g.toString(16)).slice(-2);
       const bhex = ("0" + b.toString(16)).slice(-2);
-      const buffer = Buffer.from(`7e000503${rhex}${ghex}${bhex}00ef`, "hex");
+      const buffer = Buffer.from(`56${rhex}${ghex}${bhex}00F0AA`, "hex");
       console.log("Write:", buffer);
       this.write.write(buffer, true, err => {
         if (err) console.log("Error:", err);
