@@ -2,6 +2,8 @@ const Device = require('./Device');
 
 let Service, Characteristic;
 
+var linear = false;
+
 ('use strict');
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service;
@@ -36,7 +38,7 @@ function LedStrip(log, config, api) {
   this.log('LedStrip');
 
   this.bulb = new Service.Lightbulb(this.config.name);
-  // Set up Event Handler for bulb on/off
+
   this.bulb
     .getCharacteristic(Characteristic.On)
     .on('get', this.getPower.bind(this))
@@ -53,40 +55,42 @@ function LedStrip(log, config, api) {
     .getCharacteristic(Characteristic.Saturation)
     .on('get', this.getSaturation.bind(this))
     .on('set', this.setSaturation.bind(this));
-
+	
   this.log('all event handler was setup.');
 
   if (!this.config.uuid) return;
   this.uuid = this.config.uuid;
-
   this.log('Device UUID:', this.uuid);
+  
+  if (this.config.linear != undefined)
+	  linear = this.config.linear;
 
-  this.device = new Device(this.uuid);
+  this.device = new Device(this.uuid, verbose);
 }
 
 LedStrip.prototype = {
   getServices: function () {
     if (!this.bulb) return [];
-    this.log('Homekit asked to report service');
+	this.log('Homekit asked to report service');
     const infoService = new Service.AccessoryInformation();
     infoService.setCharacteristic(Characteristic.Manufacturer, 'LedStrip');
     return [infoService, this.bulb];
   },
   getPower: function (callback) {
-    this.log('Homekit Asked Power State', this.device.connected);
+	this.log('Homekit Asked Power State', this.device.connected);
     callback(null, this.device.power);
   },
   setPower: function (on, callback) {
-    this.log('Homekit Gave New Power State' + ' ' + on);
+	this.log('Homekit Gave New Power State' + ' ' + on);
     this.device.set_power(on);
     callback(null);
   },
   getBrightness: function (callback) {
-    this.log('Homekit Asked Brightness');
+	this.log('Homekit Asked Brightness');
     callback(null, this.device.brightness);
   },
   setBrightness: function (brightness, callback) {
-    this.log('Homekit Set Brightness', brightness);
+	this.log('Homekit Set Brightness', brightness);
     this.device.set_brightness(brightness);
     callback(null);
   },
@@ -95,17 +99,17 @@ LedStrip.prototype = {
     callback(null, this.device.hue);
   },
   setHue: function (hue, callback) {
-    this.log('Homekit Set Hue', hue);
+	this.log('Homekit Set Hue', hue);
     this.device.set_hue(hue);
     callback(null);
   },
   getSaturation: function (callback) {
-	this.log('Homekit Asked Saturation');
+	this.log('Homekit Asked Saturation');	
     callback(null, this.device.saturation);
   },
   setSaturation: function (saturation, callback) {
-    this.log('Homekit Set Saturation', saturation);
-    this.device.set_saturation(saturation);
+	this.log('Homekit Set Saturation', saturation);	
+	this.device.set_saturation(linear ? saturation : Math.sqrt(saturation)*10);
     callback(null);
   }
 };

@@ -38,25 +38,27 @@ function hslToRgb(h, s, l){
 }
 
 module.exports = class Device {
-//class Device {
 	
   constructor(uuid) {
-	  
+	
+    this.peripheral = undefined;
+	this.chars = undefined;
     this.uuid = uuid;
     this.connected = false;
     this.power = false;
+	
+	this.oldbrightness = 100;
     this.brightness = 100;
+	
     this.hue = 0;
     this.saturation = 100;
-    this.l = 0.5;
 	this.c = 1;
 	this.w = 1;
-    this.peripheral = undefined;
-	this.chars = undefined;
-	this.oldbrightness = 100;
 
     noble.on("stateChange", state => {
-      console.log("State:", state);
+	  
+		console.log("State:", state);
+	
       if (state == "poweredOn") {
         noble.startScanningAsync();
       } else {
@@ -66,7 +68,8 @@ module.exports = class Device {
     });
 
     noble.on("discover", async peripheral => {
-      console.log("discover, ", peripheral.uuid, peripheral.advertisement.localName);
+	console.log("discover, ", peripheral.uuid, peripheral.advertisement.localName);
+	
       if (peripheral.uuid == this.uuid) {
         this.peripheral = peripheral;
         noble.stopScanning();
@@ -81,10 +84,7 @@ module.exports = class Device {
 			["ffe9"]
 		  );
 		console.log("Characteristics: ", characteristics);
-		this.chars = characteristics[0];	
-
-		//this.set_brightness(100);
-		
+		this.chars = characteristics[0];			
       }
     });
   }
@@ -112,31 +112,30 @@ module.exports = class Device {
 		this.oldbrightness = this.brightness;
 		this.set_brightness(0);
 	}
-	
   }
 
   async set_brightness(level) {
 	this.brightness = level;
 	if (!this.connected) await this.connect();
-	const rgb = hslToRgb(this.hue / 360, 1, this.l);
+	const rgb = hslToRgb(this.hue / 360, 1, 0.5);
     this.set_rgb(rgb[0], rgb[1], rgb[2]);
   }
 
   async set_saturation(level) {
-	this.saturation = Math.sqrt(level)*10;
+	this.saturation = level;
 	
 	this.w = clamp(1-(this.saturation/100.0), 0, 0.5)*2;
 	this.c = clamp(this.saturation/100.0, 0, 0.5)*2;
 	
 	if (!this.connected) await this.connect();
-	const rgb = hslToRgb(this.hue / 360, 1, this.l);
+	const rgb = hslToRgb(this.hue / 360, 1, 0.5);
     this.set_rgb(rgb[0], rgb[1], rgb[2]);
   }
 
   async set_hue(level) {
 	this.hue = level;
 	if (!this.connected) await this.connect();
-	const rgb = hslToRgb(this.hue / 360, 1, this.l);
+	const rgb = hslToRgb(this.hue / 360, 1, 0.5);
     this.set_rgb(rgb[0], rgb[1], rgb[2]);
   }
 
@@ -165,5 +164,3 @@ module.exports = class Device {
     });
   }
 }
-
-//dev = new Device("ffff80048c15");
