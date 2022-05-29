@@ -6,8 +6,27 @@ let Service, Characteristic;
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
-  homebridge.registerAccessory('@gatoxmiau/homebridge-ledstrip-ble-rgbw, 'LedStrip', LedStrip);
+  homebridge.registerAccessory('@gatoxmiau/homebridge-ledstrip-ble-rgbw', 'LedStrip', LedStrip);
 };
+
+function LedStrip(log, config, api) {
+  this.log = log;
+  this.config = config;
+  this.homebridge = api;
+
+  this.log('LedStrip');
+
+  this.bulb = new Service.Lightbulb(this.config.name);
+  // Set up Event Handler for bulb on/off
+  this.bulb
+    .getCharacteristic(Characteristic.On)
+    .on('get', this.getPower.bind(this))
+    .on('set', this.setPower.bind(this));
+  this.bulb
+    .getCharacteristic(Characteristic.Brightness)
+    .on('get', this.getBrightness.bind(this))
+    .on('set', this.setBrightness.bind(this));
+ }
 
 function LedStrip(log, config, api) {
   this.log = log;
@@ -72,6 +91,7 @@ LedStrip.prototype = {
     callback(null);
   },
   getHue: function (callback) {
+	this.log('Homekit Asked Hue');
     callback(null, this.device.hue);
   },
   setHue: function (hue, callback) {
@@ -80,6 +100,7 @@ LedStrip.prototype = {
     callback(null);
   },
   getSaturation: function (callback) {
+	this.log('Homekit Asked Saturation');
     callback(null, this.device.saturation);
   },
   setSaturation: function (saturation, callback) {
@@ -88,3 +109,5 @@ LedStrip.prototype = {
     callback(null);
   }
 };
+
+

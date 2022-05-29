@@ -1,11 +1,5 @@
 const noble = require("@abandonware/noble");
 
-function clamp(n, a, b){
-	if(n < a) return a;
-	if(n > b) return b;
-	return n;
-}
-
 function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -49,11 +43,8 @@ module.exports = class Device {
     this.hue = 0;
     this.saturation = 100;
     this.l = 0.5;
-	this.c = 1;
-	this.w = 1;
     this.peripheral = undefined;
 	this.chars = undefined;
-	this.oldbrightness = 100;
 
     noble.on("stateChange", state => {
       console.log("State:", state);
@@ -81,10 +72,7 @@ module.exports = class Device {
 			["ffe9"]
 		  );
 		console.log("Characteristics: ", characteristics);
-		this.chars = characteristics[0];	
-
-		//this.set_brightness(100);
-		
+		this.chars = characteristics[0];		
       }
     });
   }
@@ -105,62 +93,42 @@ module.exports = class Device {
   }
   
   async set_power(status) {
-	this.power = status;
-	if (status){
-		this.set_brightness(this.oldbrightness);
-	} else {
-		this.oldbrightness = this.brightness;
-		this.set_brightness(0);
-	}
-	
+	console.log("set_power called, no action");
+	return;
   }
 
   async set_brightness(level) {
-	this.brightness = level;
 	if (!this.connected) await this.connect();
-	const rgb = hslToRgb(this.hue / 360, 1, this.l);
+	this.brightness = level;
+	const rgb = hslToRgb(this.hue / 360, this.saturation / 100, this.l);
     this.set_rgb(rgb[0], rgb[1], rgb[2]);
   }
 
   async set_saturation(level) {
-	this.saturation = Math.sqrt(level)*10;
-	
-	this.w = clamp(1-(this.saturation/100.0), 0, 0.5)*2;
-	this.c = clamp(this.saturation/100.0, 0, 0.5)*2;
-	
 	if (!this.connected) await this.connect();
-	const rgb = hslToRgb(this.hue / 360, 1, this.l);
+	this.saturation = level;
+	const rgb = hslToRgb(this.hue / 360, this.saturation / 100, this.l);
     this.set_rgb(rgb[0], rgb[1], rgb[2]);
   }
 
   async set_hue(level) {
-	this.hue = level;
 	if (!this.connected) await this.connect();
-	const rgb = hslToRgb(this.hue / 360, 1, this.l);
+	this.hue = level;
+	const rgb = hslToRgb(this.hue / 360, this.saturation / 100, this.l);
     this.set_rgb(rgb[0], rgb[1], rgb[2]);
   }
 
   async set_rgb(r, g, b) {
     if (!this.connected) await this.connect();
 		
-	var f = (this.brightness/100.0);
-		
-    const rhex = ("0" + parseInt(r*f*this.c).toString(16)).slice(-2);
-    const ghex = ("0" + parseInt(g*f*this.c).toString(16)).slice(-2);
-    const bhex = ("0" + parseInt(b*f*this.c).toString(16)).slice(-2);
-	
-	const whex = ("0" + parseInt(255.0*f*this.w).toString(16)).slice(-2);
+    const rhex = ("0" + (r*this.brightness/100.0).toString(16)).slice(-2);
+    const ghex = ("0" + (g*this.brightness/100.0).toString(16)).slice(-2);
+    const bhex = ("0" + (b*this.brightness/100.0).toString(16)).slice(-2);
 
-    const bufferC = Buffer.from(`56${rhex}${ghex}${bhex}00F0AA`, "hex");
-    const bufferW = Buffer.from(`56000000${whex}0FAA`, "hex");
-	
-	console.log("Write color:", bufferC);
-    this.chars.write(bufferC, true, err => {
-		if (err) console.log("Error:", err);
-    });
-	
-	console.log("Write white:", bufferW);
-    this.chars.write(bufferW, true, err => {
+    const buffer = Buffer.from(`56${rhex}${ghex}${bhex}00F0AA`, "hex");
+    
+	console.log("Write:", buffer);
+    this.chars.write(buffer, true, err => {
 		if (err) console.log("Error:", err);
     });
   }

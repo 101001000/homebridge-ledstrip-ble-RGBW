@@ -1,11 +1,11 @@
 {
     "name": "@gatoxmiau/homebridge-ledstrip-ble-rgbw",
-    "version": "1.0.2",
+    "version": "1.0.11",
     "displayName": "Homebridge Ledstrip BLE",
     "description": "",
     "main": "index.js",
     "dependencies": {
-        "@abandonware/noble": "^1.9.2-14"
+        "@abandonware/noble": "^1.9.2-15"
     },
     "keywords": [
         "homebridge-plugin"
